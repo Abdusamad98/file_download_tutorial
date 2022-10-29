@@ -31,7 +31,7 @@ class FileManagerCubit extends Cubit<FileManagerState> {
     print("PATH :${directory?.path}");
     String url = fileInfo.fileUrl;
     String newFileLocation =
-        "${directory?.path}/${fileInfo.fileName}${url.substring(url.length - 5, url.length)}";
+        "${directory?.path}/${fileInfo.fileName}${DateTime.now().millisecond}${url.substring(url.length - 5, url.length)}";
     try {
       await dio.download(url, newFileLocation,
           onReceiveProgress: (received, total) {
