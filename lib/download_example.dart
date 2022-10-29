@@ -11,54 +11,62 @@ class FileDownloadExample extends StatefulWidget {
 }
 
 class _FileDownloadExampleState extends State<FileDownloadExample> {
+  int doublePress = 0;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("File download example one"),
-      ),
-      body: BlocBuilder<FileManagerCubit, FileManagerState>(
-        builder: (context, state) {
-          //"https://images.all-free-download.com/footage_preview/mp4/closeup_of_wild_butterfly_in_nature_6891908.mp4",
-          return Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.download),
-                title: Text("Downloaded: ${state.progress * 100} %"),
-                subtitle: LinearProgressIndicator(
-                  value: state.progress,
-                  backgroundColor: Colors.black,
-                ),
-                onTap: () {
-                  context.read<FileManagerCubit>().downloadFile(
-                        fileName: "fileName",
-                        url:
-                            "https://bilimlar.uz/wp-content/uploads/2021/02/k100001.pdf",
-                      );
-                },
-              ),
-              StreamBuilder<double>(
-                  stream: state.myStream.stream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      var value = snapshot.data!;
-                      return LinearProgressIndicator(
-                        value: value,
-                        backgroundColor: Colors.black,
-                      );
-                    }
-                    return const SizedBox();
-                  })
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          OpenFile.open(
-            "/storage/emulated/0/Download/video8.mp4",
-          );
-        },
+    return WillPopScope(
+      onWillPop: () async {
+        if (doublePress == 2) {
+          return true;
+        } else {
+          doublePress++;
+        }
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("File download example one"),
+        ),
+        body: BlocBuilder<FileManagerCubit, FileManagerState>(
+          builder: (context, state) {
+            return StreamBuilder(
+                stream: context.read<FileManagerCubit>().controller.stream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    var prData = snapshot.data!;
+                    return ListView(
+                      children: List.generate(state.files.length, (index) {
+                        var singleFile = state.files[index];
+                        print("PRO:${singleFile.progress}");
+                        return ListTile(
+                          leading: const Icon(Icons.download),
+                          title: Text(
+                              "Downloaded: ${singleFile.progress * 100} %"),
+                          subtitle: LinearProgressIndicator(
+                            value: prData[index],
+                            backgroundColor: Colors.black,
+                          ),
+                          onTap: () {
+                            context.read<FileManagerCubit>().downloadIfExists(
+                                  index: index,
+                                );
+                          },
+                        );
+                      }),
+                    );
+                  }
+                  return const SizedBox();
+                });
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            OpenFile.open(
+              "/storage/emulated/0/Download/video8.mp4",
+            );
+          },
+        ),
       ),
     );
   }

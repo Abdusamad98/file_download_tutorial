@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:file_download_tutorial/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file_safe/open_file_safe.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,13 +15,17 @@ part 'file_manager_state.dart';
 class FileManagerCubit extends Cubit<FileManagerState> {
   FileManagerCubit()
       : super(
-          FileManagerState(progress: 0.0, myStream: StreamController()),
+          FileManagerState(
+              files: filesData,
+              progresses: filesData.map((e) => e.progress).toList()),
         );
 
-  final StreamController<double> streamController = StreamController<double>();
+   StreamController<List<double>> controller = StreamController<List<double>>();
 
-  // var directory2 = await getExternalStorageDirectories();
-  // var directory3 = await getExternalStorageDirectory();
+   void func(){
+     controller.stream.asBroadcastStream();
+  }
+  List<double> progresses = filesData.map((e) => e.progress).toList();
 
   void downloadFile({
     required String fileName,
@@ -52,11 +57,9 @@ class FileManagerCubit extends Cubit<FileManagerState> {
         await dio.download(url, newFileLocation,
             onReceiveProgress: (received, total) {
           double pr = received / total;
-          streamController.sink.add(pr);
-          emit(state.copyWith(
-            progress: pr,
-            myStream: streamController,
-          ));
+          // emit(state.copyWith(
+          //   progress: pr,
+          // ));
         });
         OpenFile.open(
           newFileLocation,
@@ -68,23 +71,27 @@ class FileManagerCubit extends Cubit<FileManagerState> {
   }
 
   void downloadIfExists({
-    required String fileName,
-    required String url,
+    required int index,
   }) async {
     bool hasPermission = await _requestWritePermission();
     if (!hasPermission) return;
     Dio dio = Dio();
     var directory = await getDownloadPath();
+    String url = state.files[index].fileUrl;
     String newFileLocation =
-        "${directory?.path}/$fileName${url.substring(url.length - 5, url.length)}";
+        "${directory?.path}/${state.files[index].fileName}${url.substring(url.length - 5, url.length)}";
     try {
       await dio.download(url, newFileLocation,
           onReceiveProgress: (received, total) {
-        emit(state.copyWith(progress: received / total));
+        var pr = received / total;
+        progresses[index] = pr;
+        controller.sink.add(progresses);
+        emit(state);
       });
-      OpenFile.open(
-        newFileLocation,
-      );
+      // OpenFile.open(
+      //   newFileLocation,
+      // );
+
     } catch (error) {
       debugPrint("DOWNLOAD ERROR:$error");
     }
@@ -112,3 +119,65 @@ class FileManagerCubit extends Cubit<FileManagerState> {
     return directory;
   }
 }
+
+class FileInfo extends Equatable {
+  final String fileName;
+  final String fileUrl;
+  final double progress;
+
+  FileInfo({
+    required this.fileName,
+    required this.fileUrl,
+    required this.progress,
+  });
+
+  FileInfo copyWith({
+    String? fileName,
+    String? fileUrl,
+    double? progress,
+  }) =>
+      FileInfo(
+        fileName: fileName ?? this.fileName,
+        fileUrl: fileUrl ?? this.fileUrl,
+        progress: progress ?? this.progress,
+      );
+
+  @override
+  List<Object?> get props => [
+        fileName,
+        fileUrl,
+        progress,
+      ];
+}
+
+List<FileInfo> filesData = [
+  FileInfo(
+    fileName: "PythonBook",
+    fileUrl: "https://bilimlar.uz/wp-content/uploads/2021/02/k100001.pdf",
+    progress: 0.0,
+  ),
+  FileInfo(
+    progress: 0.0,
+    fileName: "Butterfly",
+    fileUrl:
+        "https://images.all-free-download.com/footage_preview/mp4/closeup_of_wild_butterfly_in_nature_6891908.mp4",
+  ),
+  FileInfo(
+    progress: 0.0,
+    fileName: "Sabyan ya Rohman",
+    fileUrl:
+        "https://muzzona.kz/upload/files/2020-12/sabyan-gambus-rohman-ya-rohman_(muzzona.kz).mp3",
+  ),
+  FileInfo(
+    progress: 0.0,
+    fileName: "ajotyib rasm",
+    fileUrl:
+        "https://odam.uz/upload/media/posts/2019-10/21/mashhur-suratkash-ajoyib-rasm-olish-sirlarini-oshkor-qildi_1571694997-b.jpg",
+  ),
+  FileInfo(
+    progress: 0.0,
+    fileName: "Foydali file",
+    fileUrl:
+        "https://foydali-fayllar.uz/wp-content/uploads/2021/04/informatika-test.doc.zip",
+  ),
+];

@@ -2,22 +2,25 @@ part of 'file_manager_cubit.dart';
 
 class FileManagerState extends Equatable {
   FileManagerState({
-    required this.progress,
-    required this.myStream,
+    required this.files,
+    required this.progresses,
   });
 
-  final double progress;
-  final StreamController<double> myStream;
+  final List<FileInfo> files;
+  final List<double> progresses;
 
   FileManagerState copyWith({
-    double? progress,
-    StreamController<double>? myStream,
+    List<FileInfo>? files,
+    List<double>? progresses,
   }) =>
       FileManagerState(
-        progress: progress ?? this.progress,
-        myStream: myStream ?? this.myStream,
+        files: files ?? this.files,
+        progresses: progresses ?? this.progresses,
       );
 
   @override
-  List<Object?> get props => [progress, myStream];
+  List<Object?> get props => [
+        files,
+        progresses,
+      ];
 }
