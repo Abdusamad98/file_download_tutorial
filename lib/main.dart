@@ -1,13 +1,9 @@
-import 'package:file_download_tutorial/cubit/file_manager_cubit.dart';
 import 'package:file_download_tutorial/download_example.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
-  runApp(BlocProvider(
-    create: (context) => FileManagerCubit(),
-    child: MyApp(),
-  ));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -16,6 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
